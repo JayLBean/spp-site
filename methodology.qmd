@@ -52,10 +52,10 @@ You invoke the plugin once; its router walks four phases, each ending in a human
 
 | Phase | Purpose | Produces |
 |---|---|---|
-| `/spp-init` | Consultation — read the repo, surface the metric and class definitions, write the contract | `plan.md` |
-| `/spp-baseline` | Label (or review) data with `baseline-quality`; generate the stratified split | `baseline.csv`, `splits.json` |
-| `/spp-loop` | Run optimization iterations with the auditor (and optional adversary) active; stop on dev plateau or the overfitting guard | `prompt_v(N).md`, per-iteration artifacts |
-| `/spp-finalize` | Run the sacred test set once; generate the per-model report and freeze the prompt | `REPORT.md`, `PROMPT_FROZEN_v01.md` |
+| Init | Consultation — read the repo, surface the metric and class definitions, write the contract | `plan.md` |
+| Baseline | Label (or review) data with `baseline-quality`; generate the stratified split | `baseline.csv`, `splits.json` |
+| Loop | Run optimization iterations with the auditor (and optional adversary) active; stop on dev plateau or the overfitting guard | `prompt_v(N).md`, per-iteration artifacts |
+| Finalize | Run the sacred test set once; generate the per-model report and freeze the prompt | `REPORT.md`, `PROMPT_FROZEN_v01.md` |
 
 Each phase refuses to proceed without an explicit approval at its gate (G1–G6).
 

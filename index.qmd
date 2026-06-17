@@ -42,13 +42,13 @@ ending in a human approval gate (**G1–G6**).
 
 | Phase | What it does | Gate |
 |---|---|---|
-| **`/spp-init`** | Consultation: the designer agent reads your repo, surfaces the metric and class definitions, writes `plan.md` (the contract) | G1 |
-| **`/spp-baseline`** | Label rows (or review your labels) with `baseline-quality`, then generate the stratified split | G2 / G3 |
-| **`/spp-loop`** | Iterate against dev with the auditor active; each edit is reviewed *before* any score signal; stop on plateau or the overfitting guard | G4 |
-| **`/spp-finalize`** | Run the frozen prompt against the sacred test **once**; generate the per-model `REPORT.md` | G6 |
+| **Init** | Consultation: the designer agent reads your repo, surfaces the metric and class definitions, writes `plan.md` (the contract) | G1 |
+| **Baseline** | Label rows (or review your labels) with `baseline-quality`, then generate the stratified split | G2 / G3 |
+| **Loop** | Iterate against dev with the auditor active; each edit is reviewed *before* any score signal; stop on plateau or the overfitting guard | G4 |
+| **Finalize** | Run the frozen prompt against the sacred test **once**; generate the per-model `REPORT.md` | G6 |
 
-The `/spp-*` names are the skill's internal phase steps — what it does at each stage, **not**
-slash commands you type. [Full usage →](usage.qmd)
+These four phases are internal steps the router runs after your single `/spp:run` — you never
+invoke them directly. [Full usage →](usage.qmd)
 
 ## Does it work? The benchmark
 

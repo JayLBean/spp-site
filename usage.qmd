@@ -12,16 +12,16 @@ Claude Code, or invoke the plugin directly:
 /spp:run <task-name>
 ```
 
-You invoke this **once**. The skill's router then walks the four phases and the six human gates in
-order. The `/spp-*` names below are the skill's internal phase steps — what it does at each stage,
-**not** slash commands you type separately.
+You invoke this **once** — it is the only command you type. The skill's router then walks the four
+phases and the six human gates in order. The phases below (Init, Baseline, Loop, Finalize) are
+internal steps the router runs; you never invoke them directly.
 
 `<task-name>` is optional: if omitted, the designer asks for one as the first question. It becomes
 the directory name under `spp/` — kebab-case, no spaces (e.g. `hair-loss-discourse`).
 
 ## The four phases
 
-### 1. `/spp-init` — consultation → the contract
+### 1. Init — consultation → the contract
 
 The **designer agent** reads your repository to ground itself, then surfaces the assumptions you
 have not made explicit: the metric definition, the decision rules and class definitions, your
@@ -31,7 +31,7 @@ plan and asks you to correct it — strawman-first, not a blank questionnaire. T
 
 > **Gate G1** — approve the plan to proceed.
 
-### 2. `/spp-baseline` — labels and splits
+### 2. Baseline — labels and splits
 
 spp either labels rows with you or reviews labels you already have, running the
 `baseline-quality` review to catch bad gold *before* it poisons everything downstream. It then
@@ -40,7 +40,7 @@ then untouched until the final phase.
 
 > **Gate G2** — approve the reviewed baseline. **Gate G3** — approve the split.
 
-### 3. `/spp-loop` — the optimization loop
+### 3. Loop — the optimization loop
 
 Iterations run against the **dev** set with the **auditor** active (and an optional adversary).
 Each iteration scores the current prompt, diagnoses the disagreements, proposes one edit, and has
@@ -51,7 +51,7 @@ it.
 
 > **Gate G4** — approve the dry-run to start iterating.
 
-### 4. `/spp-finalize` — the sacred read and the report
+### 4. Finalize — the sacred read and the report
 
 The selected prompt is frozen and run against the **sacred test set exactly once**. spp writes a
 per-model `REPORT.md` — headline metric, per-class breakdown, generalization (dev → test), and an

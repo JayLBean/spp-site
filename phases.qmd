@@ -4,16 +4,15 @@ subtitle: "Each phase in detail — inputs, gates, outputs, and the subagents it
 ---
 
 ::: {.callout-important}
-**`/spp:run` is the only command you type.** `/spp-init`, `/spp-baseline`, `/spp-loop`, and
-`/spp-finalize` below are **internal phases** — the steps the router runs after that single
-invocation. They are written with a `/spp-*` prefix because that is the naming convention for the
-phase docs in the source repo, **not** because they are slash commands you can call directly.
+**`/spp:run` is the only command you type.** The four phases below — **Init**, **Baseline**,
+**Loop**, and **Finalize** — are internal steps the router runs after that single invocation. You
+never call them directly.
 :::
 
 After you invoke `/spp:run <task-name>` once, the router walks the four phases below in order. Each
 operates on `spp/<task-name>/` in your project and enforces its trailing human gate.
 
-## Phase 1 · `/spp-init`
+## Phase 1 · Init
 
 Consultation. Produces the contract every later phase reads from.
 
@@ -26,7 +25,7 @@ Consultation. Produces the contract every later phase reads from.
   policy, and stop criteria. Idempotent and resumable: re-running picks up an existing `plan.md`.
 - **Gate:** **G1** — approve the plan.
 
-## Phase 2 · `/spp-baseline`
+## Phase 2 · Baseline
 
 Labeling and splitting (Phase 1 + 1.5).
 
@@ -38,7 +37,7 @@ Labeling and splitting (Phase 1 + 1.5).
   split with the **test set registered as sacred** (untouched until finalize).
 - **Gates:** **G2** (baseline reviewed) and **G3** (split confirmed).
 
-## Phase 3 · `/spp-loop`
+## Phase 3 · Loop
 
 The optimization loop (Phase 2). One iteration is a relay of **information-isolated** subagents
 (full allow-lists in the [Methodology](methodology.qmd)):
@@ -59,7 +58,7 @@ The optimization loop (Phase 2). One iteration is a relay of **information-isola
 - **Stops on:** a dev-metric plateau, the overfitting guard (train pulling away from dev), or you.
 - **Gate:** **G4** — approve the dry-run to begin.
 
-## Phase 4 · `/spp-finalize`
+## Phase 4 · Finalize
 
 The sacred read and the report (Phase 3).
 
