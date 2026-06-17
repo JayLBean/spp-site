@@ -66,6 +66,6 @@ logs, is published separately:
   and per-stage information isolation (the load-bearing property).
 - **[Installation](installation.qmd)** — install the plugin in Claude Code.
 - **[Usage](usage.qmd)** — the entrypoint, the four phases, and the six gates step by step.
-- **[Commands](commands.qmd)** — per-phase reference: inputs, gates, outputs, subagents.
+- **[Phases](phases.qmd)** — per-phase reference: inputs, gates, outputs, subagents.
 - **[Examples](examples.qmd)** — worked, reproducible runs.
 - **[Scope](scope.qmd)** — what spp is for, and the deliberate non-goals.

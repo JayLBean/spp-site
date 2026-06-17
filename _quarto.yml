@@ -22,8 +22,8 @@ website:
         text: Installation
       - href: usage.qmd
         text: Usage
-      - href: commands.qmd
-        text: Commands
+      - href: phases.qmd
+        text: Phases
       - href: examples.qmd
         text: Examples
       - href: scope.qmd
@@ -50,6 +50,9 @@ format:
     toc-depth: 3
     toc-location: right
     number-sections: false
+    # Always show the copy-to-clipboard button in the top-right of every code
+    # block (default is hover-only).
+    code-copy: true
     link-external-newwindow: true
     smooth-scroll: true
     anchor-sections: true

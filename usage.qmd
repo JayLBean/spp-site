@@ -79,4 +79,4 @@ A complete end-to-end example is the canonical
 [`hair-loss-relevance`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/hair-loss-relevance)
 example; the [`public-benchmark`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/public-benchmark)
 example ships a full, real, reproducible run on public TREC data. See [Examples](examples.qmd) for
-the full set, and the [Commands](commands.qmd) reference for per-phase inputs, gates, and outputs.
+the full set, and the [Phases](phases.qmd) reference for per-phase inputs, gates, and outputs.
