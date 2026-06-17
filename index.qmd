@@ -1,0 +1,71 @@
+---
+title: "spp — Supervised Prompt Producer"
+subtitle: "Disciplined, human-in-the-loop supervised prompt learning for Claude Code — a production-grade prompt you can defend in review, with evidence, not vibes."
+---
+
+**spp** is a Claude Code plugin. It turns a labeled baseline into a production-grade
+classification prompt through a four-phase, human-in-the-loop methodology, under a design lock
+that automated optimizers do not have: **per-stage information isolation**.
+
+It handles **classification** (binary, multi-class, fixed-schema), **multi-field and
+hierarchical structured output**, **structured extraction** (variable-cardinality,
+span-grounded), and **prompt decomposition** (a managed linear pipeline) — anything with a
+labeled ground truth and a mechanical metric. It is deliberately *not* a generation, RAG,
+agentic, or prompt-search tool (see [Scope](scope.qmd)).
+
+## The two failure modes it targets
+
+Prompt engineering by feel produces prompts that *look* good and fail in production. Automated
+optimizers trust a metric and search — which works only if the metric is honest. spp targets the
+two failure modes both miss:
+
+- **Baseline overfitting** *(the deal-breaker)* — the prompt fits your specific labels, not the
+  class definition. Scores high on what you tuned against, collapses on similar-but-unseen data.
+  spp's primary defense target.
+- **Model overfitting** — the prompt fits one model's instruction-following style. Fine *if you
+  know it* and ship accordingly; dangerous if it ships unmarked. spp documents and surfaces it.
+
+[How spp defends against each →](methodology.qmd)
+
+## The example that motivates both
+
+The methodology comes from a hair-loss-discourse classifier that produced a Qwen-locked prompt at
+`test F1 = 0.941, recall = 1.0`. Run cross-family, it split — `F1 ≈ 0.76` on GPT-4o-mini,
+`≈ 0.91` on GPT-4o full — and the failures *clustered* by length, not capability. A prompt that
+looked finished was silently model-specific. spp exists to make that visible, and to stop the
+deeper problem (fitting the labels instead of the definition) before it ever ships.
+
+## How it works — four phases, six gates
+
+You invoke the plugin **once** (`/spp:run <task-name>`); its router then walks four phases, each
+ending in a human approval gate (**G1–G6**).
+
+| Phase | What it does | Gate |
+|---|---|---|
+| **`/spp-init`** | Consultation: the designer agent reads your repo, surfaces the metric and class definitions, writes `plan.md` (the contract) | G1 |
+| **`/spp-baseline`** | Label rows (or review your labels) with `baseline-quality`, then generate the stratified split | G2 / G3 |
+| **`/spp-loop`** | Iterate against dev with the auditor active; each edit is reviewed *before* any score signal; stop on plateau or the overfitting guard | G4 |
+| **`/spp-finalize`** | Run the frozen prompt against the sacred test **once**; generate the per-model `REPORT.md` | G6 |
+
+The `/spp-*` names are the skill's internal phase steps — what it does at each stage, **not**
+slash commands you type. [Full usage →](usage.qmd)
+
+## Does it work? The benchmark
+
+On three public classification tasks (AG News, SST-5, TREC), same task model, same seed prompt,
+same sacred test, spp posts the **highest mean accuracy** and the **lowest task-model cost** on
+every task — matching DSPy's *few-shot* accuracy with *zero* demonstrations on two tasks, and
+winning TREC outright. The full three-way comparison (vs EvoPrompt and DSPy), with per-task loop
+logs, is published separately:
+
+**→ [The spp benchmark](https://jaylbean.github.io/spp-benchmark/)**
+
+## Where to go next
+
+- **[Methodology](methodology.qmd)** — the scientific core: the failure modes, the four phases,
+  and per-stage information isolation (the load-bearing property).
+- **[Installation](installation.qmd)** — install the plugin in Claude Code.
+- **[Usage](usage.qmd)** — the entrypoint, the four phases, and the six gates step by step.
+- **[Commands](commands.qmd)** — per-phase reference: inputs, gates, outputs, subagents.
+- **[Examples](examples.qmd)** — worked, reproducible runs.
+- **[Scope](scope.qmd)** — what spp is for, and the deliberate non-goals.

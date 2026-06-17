@@ -1,0 +1,56 @@
+---
+title: "Installation"
+subtitle: "spp ships as a Claude Code plugin."
+---
+
+## Requirements
+
+- **[Claude Code](https://claude.com/claude-code)** — spp is a plugin that runs inside it.
+- **Python 3.11+** — for the runner scripts spp generates and executes (scoring, splitting).
+- A **task model** reachable from your environment — the model the produced prompt will run
+  against (any OpenAI-compatible endpoint, or a local server).
+
+## Install from the marketplace
+
+From inside Claude Code:
+
+```
+/plugin marketplace add JayLBean/supervised-prompt-producer
+/plugin install spp@supervised-prompt-producer
+```
+
+That registers the `spp` plugin and its `/spp:run` entrypoint.
+
+## Local development
+
+To run against an unreleased or locally-modified version:
+
+```sh
+git clone https://github.com/JayLBean/supervised-prompt-producer.git
+cd supervised-prompt-producer
+claude --plugin-dir ./
+```
+
+`--plugin-dir ./` loads the plugin from the working tree, so any local edits take effect on the
+next Claude Code session.
+
+## Verify
+
+In a Claude Code session, confirm the entrypoint is available:
+
+```
+/spp:run
+```
+
+With no task name, the designer agent begins the consultation and asks for one. (See
+[Usage](usage.qmd) for the full walkthrough.) If the command is not found, re-check the
+`/plugin install` step above, or that `--plugin-dir` points at the cloned repository root.
+
+## What spp writes to your project
+
+spp operates on a `spp/<task-name>/` directory inside your project — the plan, baseline, splits,
+per-iteration artifacts, the frozen prompt, and the report all live there. Nothing is written
+outside that directory without your approval, and the sacred test set is never read until you
+approve gate **G5**.
+
+[Start using spp →](usage.qmd)

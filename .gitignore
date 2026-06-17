@@ -1,0 +1,6 @@
+# Quarto build artifacts — rendered by CI, never committed.
+/_site/
+/.quarto/
+
+# OS
+.DS_Store

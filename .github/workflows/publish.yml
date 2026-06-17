@@ -1,0 +1,48 @@
+name: Publish spp site
+
+# This repo is only the website, so the Quarto project lives at the repo root.
+# On every push to main that touches site sources, render and publish the built
+# _site to the gh-pages branch that GitHub Pages serves.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.qmd'
+      - '_quarto.yml'
+      - 'styles/**'
+      - '.github/workflows/publish.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  render-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.7.33
+
+      # No Jupyter/Python kernel: the pages are pure markdown with no executable
+      # code chunks, so Quarto renders them without one.
+      - name: Render Quarto site
+        uses: quarto-dev/quarto-actions/render@v2
+        with:
+          path: .
+
+      - name: Publish _site to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _site
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "publish: ${{ github.sha }}"

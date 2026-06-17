@@ -1,0 +1,82 @@
+---
+title: "Usage"
+subtitle: "One entrypoint, four phases, six gates."
+---
+
+## The entrypoint
+
+From a project that has (or will have) a labeled baseline, describe your classification task to
+Claude Code, or invoke the plugin directly:
+
+```
+/spp:run <task-name>
+```
+
+You invoke this **once**. The skill's router then walks the four phases and the six human gates in
+order. The `/spp-*` names below are the skill's internal phase steps — what it does at each stage,
+**not** slash commands you type separately.
+
+`<task-name>` is optional: if omitted, the designer asks for one as the first question. It becomes
+the directory name under `spp/` — kebab-case, no spaces (e.g. `hair-loss-discourse`).
+
+## The four phases
+
+### 1. `/spp-init` — consultation → the contract
+
+The **designer agent** reads your repository to ground itself, then surfaces the assumptions you
+have not made explicit: the metric definition, the decision rules and class definitions, your
+model lock-in posture, your willingness to label, and the stop criteria. It proposes a default
+plan and asks you to correct it — strawman-first, not a blank questionnaire. The output is
+`plan.md`, the contract every later phase reads from.
+
+> **Gate G1** — approve the plan to proceed.
+
+### 2. `/spp-baseline` — labels and splits
+
+spp either labels rows with you or reviews labels you already have, running the
+`baseline-quality` review to catch bad gold *before* it poisons everything downstream. It then
+generates a stratified train / dev / test split, with the **test set held sacred** — registered,
+then untouched until the final phase.
+
+> **Gate G2** — approve the reviewed baseline. **Gate G3** — approve the split.
+
+### 3. `/spp-loop` — the optimization loop
+
+Iterations run against the **dev** set with the **auditor** active (and an optional adversary).
+Each iteration scores the current prompt, diagnoses the disagreements, proposes one edit, and has
+that edit audited for *categorical vs row-specific* generalizability **before** any score signal
+selects it — the per-stage isolation described in the [Methodology](methodology.qmd). The loop
+stops on a dev plateau, on the overfitting guard (train pulling away from dev), or when you call
+it.
+
+> **Gate G4** — approve the dry-run to start iterating.
+
+### 4. `/spp-finalize` — the sacred read and the report
+
+The selected prompt is frozen and run against the **sacred test set exactly once**. spp writes a
+per-model `REPORT.md` — headline metric, per-class breakdown, generalization (dev → test), and an
+explicit Limitations section — plus `PROMPT_FROZEN_v01.md` with its content hash.
+
+> **Gate G5** — approve reading the test set. **Gate G6** — decide ship / no-ship.
+
+## The gate phrases
+
+Each gate refuses to advance without an explicit, allowed response. The approval phrases are fixed
+and recorded in `plan.md`, so every hand-off is auditable:
+
+| Gate | Approval phrase |
+|---|---|
+| G1 — plan | `approved, proceed to baseline` |
+| G2 — baseline | `approved, proceed to splits` |
+| G3 — split | `approved, start the loop` |
+| G4 — dry-run | `approved, run iteration 1` |
+| G5 — finalize | `approved, score the test set` |
+| G6 — production | `approved, freeze the prompt` |
+
+## A worked run
+
+A complete end-to-end example is the canonical
+[`hair-loss-relevance`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/hair-loss-relevance)
+example; the [`public-benchmark`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/public-benchmark)
+example ships a full, real, reproducible run on public TREC data. See [Examples](examples.qmd) for
+the full set, and the [Commands](commands.qmd) reference for per-phase inputs, gates, and outputs.

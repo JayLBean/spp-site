@@ -1,0 +1,55 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "spp"
+  description: >-
+    Supervised Prompt Producer — a Claude Code plugin for disciplined,
+    human-in-the-loop supervised prompt learning. Turn a labeled baseline
+    into a production-grade prompt you can defend in review.
+  site-url: "https://jaylbean.github.io/spp-site/"
+  repo-url: "https://github.com/JayLBean/supervised-prompt-producer"
+  navbar:
+    background: light
+    title: "spp"
+    left:
+      - href: index.qmd
+        text: Home
+      - href: methodology.qmd
+        text: Methodology
+      - href: installation.qmd
+        text: Installation
+      - href: usage.qmd
+        text: Usage
+      - href: commands.qmd
+        text: Commands
+      - href: examples.qmd
+        text: Examples
+      - href: scope.qmd
+        text: Scope
+    right:
+      - text: Benchmark
+        href: https://jaylbean.github.io/spp-benchmark/
+      - icon: github
+        href: https://github.com/JayLBean/supervised-prompt-producer
+        aria-label: spp GitHub repository
+  page-footer:
+    left: "spp — Supervised Prompt Producer · MIT"
+    right: "Built with [Quarto](https://quarto.org)"
+
+format:
+  html:
+    # `cosmo` is a minimal Bootstrap carrier for the navbar / TOC widgets;
+    # styles/report.css loads after it and wins the cascade (serif academic
+    # look, ported from the spp-bm benchmark site).
+    theme: cosmo
+    css: styles/report.css
+    page-layout: full
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    number-sections: false
+    link-external-newwindow: true
+    smooth-scroll: true
+    anchor-sections: true

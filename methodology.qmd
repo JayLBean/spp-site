@@ -1,0 +1,123 @@
+---
+title: "Methodology"
+subtitle: "The two failure modes spp defends against, and the design lock that makes the defense real."
+---
+
+spp is built around one claim: a prompt that scores well on your labeled data has *not* been
+shown to generalize — it may simply have learned your labels, or your model's style. The
+methodology exists to separate genuine class-definition learning from those two kinds of
+overfitting, and to do so with evidence a reviewer can check.
+
+## 1. The two failure modes
+
+### 1.1 Baseline overfitting — the deal-breaker
+
+The prompt learns the specific labels in the baseline rather than the underlying class
+definition. **Symptom:** high score on the labeled set, collapse on similar-but-unseen data.
+**Cause:** an optimization loop that edits the prompt to chase rows disagreeing with current
+labels, accumulating row-specific patches that do not generalize.
+
+**How spp defends:**
+
+- **A sacred test set.** A stratified train / dev / test split where the test rows are untouched
+  until the final phase. Optimization sees train + dev only.
+- **Dev-driven stop.** The loop terminates when dev metric plateaus or regresses — not when train
+  looks good. Train-vs-dev divergence is itself a stop signal (the overfitting early-stop guard).
+- **The auditor subagent.** Every prompt edit is reviewed for *categorical vs row-specific*
+  generalizability **before** the next iteration runs. This is the single highest-leverage
+  defense (see §3).
+- **Baseline-quality review.** Before any optimization, the labels themselves are adversarially
+  reviewed — a bad baseline produces polished noise no later phase can recover from.
+
+### 1.2 Model overfitting — documented, not prevented
+
+The prompt learns to exploit one model's instruction-following style. The source project's
+Qwen-locked prompt scored `test F1 = 0.941` but split cross-family (`≈0.76` GPT-4o-mini, `≈0.91`
+GPT-4o full), and the failures clustered by *length*, not capability — evidence the prompt encoded
+a Qwen-specific length tolerance the GPT family does not share.
+
+This is acceptable **if you know it**. spp's posture is to surface it, not prevent it:
+
+- **Per-model reports.** Every run lives under `runs/<model_identifier>/` using the exact model
+  string — a score on model A is never silently attributed to model B.
+- **An explicit Limitations section** in `REPORT.md` stating which model the prompt was optimized
+  against and what cross-model fragility was observed.
+
+The asymmetry is intentional: baseline overfitting destroys the methodology's claim to
+generalization; model overfitting is a known, documented scope boundary.
+
+## 2. The four phases
+
+You invoke the plugin once; its router walks four phases, each ending in a human approval gate.
+
+| Phase | Purpose | Produces |
+|---|---|---|
+| `/spp-init` | Consultation — read the repo, surface the metric and class definitions, write the contract | `plan.md` |
+| `/spp-baseline` | Label (or review) data with `baseline-quality`; generate the stratified split | `baseline.csv`, `splits.json` |
+| `/spp-loop` | Run optimization iterations with the auditor (and optional adversary) active; stop on dev plateau or the overfitting guard | `prompt_v(N).md`, per-iteration artifacts |
+| `/spp-finalize` | Run the sacred test set once; generate the per-model report and freeze the prompt | `REPORT.md`, `PROMPT_FROZEN_v01.md` |
+
+Each phase refuses to proceed without an explicit approval at its gate (G1–G6).
+
+## 3. Per-stage information isolation — the load-bearing property
+
+This is the single highest-leverage architectural property of the skill, and the design lock that
+distinguishes spp from automated optimizers like DSPy and APE. *The rest of the methodology is
+plumbing; per-stage isolation is the methodology.*
+
+**The pattern.** Every cognitive stage in the optimization loop runs in an **isolated subagent**
+with an **explicit allow-list** of inputs. The orchestrator builds each subagent's context from
+that allow-list; the subagent's context terminates when it returns; state flows between stages
+**through files**, not through the orchestrator's memory. The orchestrator coordinates; cognition
+lives in the subagents.
+
+### The subagents, and what each is allowed to see
+
+| Stage | Sees | Blind to | Why |
+|---|---|---|---|
+| **Discrepancy** | eval + results, disagreed dev rows (content), `plan.md` §2, current prompt | prior-iteration artifacts, correctly-predicted rows, the test set | reason fresh from current failures; its artifact references rows **by ID only** |
+| **Rule-edit** | current prompt, discrepancy (IDs, **no row content**), `plan.md` §2 | `baseline.csv`, scores, prior artifacts | no row content reaches it under any path — so it cannot fit rules to specific rows |
+| **Auditor** | the prompt diff, prior discrepancy, `plan.md` §2 | **all scores**, train/test labels, the sacred test | judge each edit *categorical vs row-specific* on its merits, not by whether it moved the metric |
+| **Adversary** *(optional)* | current prompt, prior discrepancy, `plan.md` §2 | scores, the sacred test, baseline rows | generate blind-spot probes from reasoning, not from metric movement; its outputs never persist |
+
+### Why the blindness is load-bearing
+
+Isolation is not stylistic. If any stage sees beyond its allow-list, it can rationalize behavior
+driven by the leaked signal:
+
+- A **discrepancy** subagent with prior-iteration artifacts echoes earlier proposals instead of
+  reasoning fresh.
+- A **rule-edit** subagent with row-content access writes rules that *look* categorical but were
+  authored to fit specific rows — the exact leakage the architecture exists to prevent.
+- An **auditor** with score access rationalizes any edit that improved the metric, including
+  row-specific patches that overfit.
+- An **adversary** with score access generates probes driven by metric movement rather than
+  genuine blind spots.
+
+The absence of leakage forces each subagent to answer the generalization question directly —
+*"would this rule still apply to a similar but unseen row?"* — rather than via outcome. This is
+why spp's prompts tend to carry rules that **transfer**: in the benchmark, spp's TREC prompt rose
+from dev to test while a score-driven genetic optimizer's fell below its own seed.
+
+::: {.callout-important}
+**The auditor's score-access prohibition is absolute.** Any change that lets the auditor see
+post-edit scores — directly or via a derived hint — silently breaks the methodology. The
+sanctioned escape valve for auditor cost is *batch auditing*, never score access or reduced
+frequency. See [Scope](scope.qmd).
+:::
+
+## 4. The six human gates
+
+The human is in the loop at six explicit approval points; the agent does the work between them and
+refuses to advance without the gate's allowed response.
+
+| Gate | Approves |
+|---|---|
+| **G1** | the plan / contract (`plan.md`) |
+| **G2** | the reviewed baseline labels |
+| **G3** | the train / dev / test split |
+| **G4** | the dry-run, to start the loop |
+| **G5** | reading the sacred test set (once) |
+| **G6** | the ship / no-ship decision on the frozen prompt |
+
+[Install spp →](installation.qmd) · [Run it →](usage.qmd) · [See it measured →](https://jaylbean.github.io/spp-benchmark/)

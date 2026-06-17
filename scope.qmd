@@ -1,0 +1,70 @@
+---
+title: "Scope & roadmap"
+subtitle: "What spp is for, the boundaries it will not cross, and the direction after v1.0."
+---
+
+## What spp is for
+
+spp produces and validates prompts for tasks with a **labeled ground truth and a mechanical
+metric**: classification (binary, multi-class, fixed-schema), multi-field and hierarchical
+structured output, structured extraction (variable-cardinality, span-grounded), and prompt
+decomposition (a managed linear pipeline). If you can write down the correct output for a row and
+compute a metric against it, spp applies.
+
+## Deliberate non-goals
+
+These are **not** roadmap items awaiting a future version. They are boundaries the methodology
+will not cross, because the underlying problem is different enough that any extension would be a
+*different* methodology — not a generalization of this one.
+
+- **Generation tasks.** Summarization, rewriting, instruction tuning, open conversation — there is
+  no fixed output space or single correct label, so spp's validation primitives (sacred test set,
+  F1 / per-class metrics, the auditor's categorical judgment) do not apply.
+- **Tool-use and agentic prompts.** These are an orchestration problem over tool boundaries and
+  conversation state, not a prompt-quality problem under per-stage isolation.
+- **RAG prompts.** RAG quality couples retrieval and prompt quality; isolating prompt quality
+  requires fixing retrieval, which spp neither inspects nor provides primitives for.
+- **Prompt-injection / jailbreak resistance.** spp audits quality on labeled data; adversarial
+  robustness has its own evaluation primitives (red-teaming, threat models) and is handled
+  separately.
+- **Automated prompt search (DSPy / GEPA / APE fusion).** spp requires that edit *proposal*
+  precede *selection-by-score*, and that no score reach the auditor. Optimizers that fuse proposal
+  and selection violate this by construction. The right relationship is **composition** — use spp
+  to produce a starting prompt, then run an optimizer downstream — not fusion.
+- **Auditor frequency reduction.** If per-iteration auditor cost is a problem, the sanctioned fix
+  is **batch auditing** (audit edits in batches spanning iterations, preserving coverage) — never
+  "audit every N iterations," which silently weakens the audit.
+- **Cross-model synthesis.** spp optimizes for *one* target model; specializing to its
+  idiosyncrasies is the objective, not overfitting to correct. Merging one prompt across models is
+  mediocre on every model. Cross-model *comparison* is legitimate, but it is downstream model
+  selection, not an spp primitive.
+- **LLM-as-judge in the scoring path.** The scoring path stays mechanical. (Judges may assist
+  *baseline label creation*, which is then frozen into the gold set — the scoring path itself
+  never calls a judge.)
+
+::: {.callout-note}
+These boundaries are why the methodology stays small and defensible. When a request is ambiguous,
+spp leans toward treating it as a future roadmap item rather than a permanent non-goal — but the
+items above are settled.
+:::
+
+## Roadmap posture after v1.0
+
+v1.0.0 froze the methodology. The cadence afterward is deliberately slow:
+
+- **Near term is patch-only (`v1.0.x`).** Bug fixes, documentation corrections, and
+  advisor-catalog entries that conform to the frozen contract — shipped as `v1.0.1`, `v1.0.2`, …
+  Holding minor releases back keeps the public surface visibly stable.
+- **New capability is deferred to `v2.0`.** Anything that changes the frozen surface — a new
+  command, a new phase, a new front-door behavior — is a major bump, waiting for a dedicated v2.0
+  design arc.
+
+A leading v2.0 candidate is **front-door onboarding**: a discover → confirm → seed step that scans
+the project for candidate assets by *shape* (a `row_id,text,label` CSV → baseline; a JSON Schema →
+output schema; a held-out split → sacred test; a `prompt_v*.md` → seed) and confirms each with you
+before pre-filling the plan — so you no longer hand-write a long kickoff. The full roadmap lives in
+[`ROADMAP.md`](https://github.com/JayLBean/supervised-prompt-producer/blob/main/ROADMAP.md).
+
+Crucially, nothing on the roadmap loosens the load-bearing locks: per-stage information isolation,
+the auditor's score-blindness, the rule-edit no-row-content rule, or the sacred test set remain
+fixed across every future version.

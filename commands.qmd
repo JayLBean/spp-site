@@ -1,0 +1,82 @@
+---
+title: "Commands reference"
+subtitle: "The four phases in detail — inputs, gates, outputs, and the subagents each invokes."
+---
+
+spp has a single user-facing entrypoint, `/spp:run <task-name>`. Everything below is what the
+router runs internally, one phase at a time. The `/spp-*` names are phase identifiers, not slash
+commands you type. Each phase operates on `spp/<task-name>/` in your project and enforces its
+trailing human gate.
+
+## `/spp-init`
+
+Consultation. Produces the contract every later phase reads from.
+
+- **Inputs:** your repository (read to ground the consultation), your answers to the designer's
+  questions.
+- **Subagent:** **designer** — the only agent that holds a conversation. It adapts the
+  methodology to your task (a stripped-down variant — no Phase 3, smaller splits, a judge-based
+  metric — is a valid output when the task warrants it).
+- **Outputs:** `plan.md` — the metric, class definitions, decision rules, model lock, split
+  policy, and stop criteria. Idempotent and resumable: re-running picks up an existing `plan.md`.
+- **Gate:** **G1** — approve the plan.
+
+## `/spp-baseline`
+
+Labeling and splitting (Phase 1 + 1.5).
+
+- **Inputs:** `plan.md`; your raw rows, or an existing `data/baseline.csv` (spp detects it and
+  switches to the bring-your-own-labels path).
+- **Sub-skill:** **`baseline-quality`** — adversarially reviews the gold labels and returns a
+  readiness verdict before any optimization runs.
+- **Outputs:** a canonicalized `baseline.csv`; `splits.json` — a stratified train / dev / test
+  split with the **test set registered as sacred** (untouched until finalize).
+- **Gates:** **G2** (baseline reviewed) and **G3** (split confirmed).
+
+## `/spp-loop`
+
+The optimization loop (Phase 2). One iteration is a relay of **information-isolated** subagents
+(full allow-lists in the [Methodology](methodology.qmd)):
+
+1. **Score** the current prompt on train + dev.
+2. **Discrepancy** subagent → `discrepancy_analysis.md` (diagnoses failures; references rows by
+   ID only).
+3. **Rule-edit** subagent → `prompt_v(N+1).md` (rewrites the prompt from the diagnosis; never
+   sees row content or scores).
+4. **Auditor** subagent → `auditor_review.md` (verdicts each edit *categorical vs row-specific*;
+   never sees scores).
+5. **Adversary** subagent *(optional, `ADVERSARY_FLAG = on`)* — blind-spot probes that never
+   persist to the baseline.
+6. **Select** on the dev signal among auditor-approved edits.
+
+- **Outputs:** per-iteration `prompt_v(N).md`, `eval.json`, `results.json`,
+  `discrepancy_analysis.md`, `auditor_review.md`; an `EARLY_STOP.md` at termination.
+- **Stops on:** a dev-metric plateau, the overfitting guard (train pulling away from dev), or you.
+- **Gate:** **G4** — approve the dry-run to begin.
+
+## `/spp-finalize`
+
+The sacred read and the report (Phase 3).
+
+- **Inputs:** the dev-selected prompt; the sacred test set (read **once**, here, after G5).
+- **Outputs:** `PROMPT_FROZEN_v01.md` (with content hash); a per-model `REPORT.md` —
+  headline metric, per-class breakdown, dev → test generalization, and an explicit Limitations
+  section naming the optimized-against model.
+- **Gates:** **G5** (sanctioned test read) and **G6** (ship / no-ship).
+
+## Artifact layout
+
+```
+spp/<task-name>/
+  plan.md                         the contract (G1)
+  data/baseline.csv               canonicalized gold (G2)
+  splits.json                     stratified split; test held sacred (G3)
+  runs/<model_identifier>/
+    run_01/ … run_NN/             per-iteration prompt + eval + discrepancy + auditor
+    EARLY_STOP.md                 termination record
+    PROMPT_FROZEN_v01.md          the frozen prompt (G6)
+    REPORT.md                     per-model result + limitations
+```
+
+Runs are namespaced by the exact model string, so a score is never silently attributed to a
+different model.

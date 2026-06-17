@@ -1,0 +1,43 @@
+---
+title: "Examples"
+subtitle: "Worked runs and skeletons, from a real public-data run to per-mode templates."
+---
+
+The spp repository ships a set of examples under
+[`examples/`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples). Two are
+full worked runs; the rest are per-mode skeletons that show the expected artifact shape for each
+task type spp supports.
+
+## Worked runs
+
+- **[`public-benchmark`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/public-benchmark)**
+  — the first example backed by a **real, fully reproducible run on public data**. A TREC
+  (6-class question-type) run on `gpt-5-nano`, with every iteration's prompt / eval / discrepancy
+  / auditor trio, the frozen prompt, the single sacred-test read, and a three-way comparison
+  against EvoPrompt and DSPy. Every row, prediction, and prompt is genuine and unredacted. This
+  is the same run documented in the
+  [benchmark site's TREC loop log](https://jaylbean.github.io/spp-benchmark/loop-logs/trec.html).
+- **[`hair-loss-relevance`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/hair-loss-relevance)**
+  — the canonical worked example shipped with spp's first release. Demonstrates the end-to-end
+  binary-relevance workflow and the failure-cluster taxonomy that motivated the methodology.
+
+## Per-mode skeletons
+
+These show the artifact layout and `plan.md` shape for each task type, so you can see what spp
+produces before running it on your own data.
+
+| Example | Task mode |
+|---|---|
+| [`multi-field-extraction`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/multi-field-extraction) | multi-field structured output (K>1) |
+| [`nested-schema`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/nested-schema) | hierarchical labels via JSON schema |
+| [`feature-group-split`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/feature-group-split) | feature-group prompt splitting |
+| [`entity-extraction`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/entity-extraction) | structured extraction (variable-cardinality, span-grounded) |
+| [`decomposition-pipeline`](https://github.com/JayLBean/supervised-prompt-producer/tree/main/examples/decomposition-pipeline) | prompt decomposition (managed linear pipeline) |
+
+## See the methodology measured
+
+For the full evidence that the methodology works — accuracy, cost, token breakdowns, the fairness
+ledger, and per-task loop logs documenting every iteration and the human-in-the-loop gate
+exchange — see the dedicated benchmark site:
+
+**→ [The spp benchmark](https://jaylbean.github.io/spp-benchmark/)**
