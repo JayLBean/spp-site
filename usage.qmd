@@ -8,7 +8,7 @@ subtitle: "One entrypoint, four phases, six gates."
 From a project that has (or will have) a labeled baseline, describe your classification task to
 Claude Code, or invoke the plugin directly:
 
-```
+```bash
 /spp:run <task-name>
 ```
 
@@ -23,31 +23,28 @@ the directory name under `spp/` — kebab-case, no spaces (e.g. `hair-loss-disco
 
 ### 1. Init — consultation → the contract
 
-The **designer agent** reads your repository to ground itself, then surfaces the assumptions you
-have not made explicit: the metric definition, the decision rules and class definitions, your
-model lock-in posture, your willingness to label, and the stop criteria. It proposes a default
-plan and asks you to correct it — strawman-first, not a blank questionnaire. The output is
-`plan.md`, the contract every later phase reads from.
+The **designer agent** reads your repo, then surfaces the assumptions you haven't made explicit —
+the metric, decision rules and class definitions, model lock, labeling appetite, and stop
+criteria. It proposes a default plan for you to correct (strawman-first, not a blank
+questionnaire), writing `plan.md` — the contract every later phase reads from.
 
 > **Gate G1** — approve the plan to proceed.
 
 ### 2. Baseline — labels and splits
 
-spp either labels rows with you or reviews labels you already have, running the
-`baseline-quality` review to catch bad gold *before* it poisons everything downstream. It then
-generates a stratified train / dev / test split, with the **test set held sacred** — registered,
-then untouched until the final phase.
+spp labels rows with you (or reviews labels you have), running the `baseline-quality` review to
+catch bad gold *before* it poisons everything downstream. It then generates a stratified
+train / dev / test split, with the **test set held sacred** — untouched until the final phase.
 
 > **Gate G2** — approve the reviewed baseline. **Gate G3** — approve the split.
 
 ### 3. Loop — the optimization loop
 
 Iterations run against the **dev** set with the **auditor** active (and an optional adversary).
-Each iteration scores the current prompt, diagnoses the disagreements, proposes one edit, and has
-that edit audited for *categorical vs row-specific* generalizability **before** any score signal
-selects it — the per-stage isolation described in the [Methodology](methodology.qmd). The loop
-stops on a dev plateau, on the overfitting guard (train pulling away from dev), or when you call
-it.
+Each scores the current prompt, diagnoses the disagreements, proposes one edit, and has it audited
+for *categorical vs row-specific* generalizability **before** any score selects it — the per-stage
+isolation described in the [Methodology](methodology.qmd). The loop stops on a dev plateau, the
+overfitting guard (train pulling away from dev), or you.
 
 > **Gate G4** — approve the dry-run to start iterating.
 

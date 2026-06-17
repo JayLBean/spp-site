@@ -70,7 +70,7 @@ The sacred read and the report (Phase 3).
 
 ## Artifact layout
 
-```
+```default
 spp/<task-name>/
   plan.md                         the contract (G1)
   data/baseline.csv               canonicalized gold (G2)

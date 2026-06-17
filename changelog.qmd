@@ -1,0 +1,40 @@
+---
+title: "Changelog"
+subtitle: "Release history. spp follows semantic versioning; the methodology froze at v1.0."
+---
+
+The detailed, canonical changelog (Keep a Changelog format) lives in the repo:
+[`CHANGELOG.md`](https://github.com/JayLBean/supervised-prompt-producer/blob/main/CHANGELOG.md).
+This is the summary.
+
+## Unreleased
+
+- Added the `public-benchmark` example — the first backed by a real, reproducible public-data run
+  — plus links to the live [benchmark](https://jaylbean.github.io/spp-benchmark/).
+- Fixed the runner to support OpenAI reasoning models (`gpt-5*`, `o`-series).
+
+Documentation and a worked artifact set only; the frozen v1.0 contract is untouched.
+
+## Releases
+
+| Version | Date | Summary |
+|---|---|---|
+| **1.0.0** | 2026-06-08 | Stabilization — the contract freeze. The methodology is frozen; new capability is now v2.0. |
+| 0.11.0 | 2026-06-08 | Prompt decomposition — a managed linear pipeline of node-local tasks. |
+| 0.10.0 | 2026-06-08 | Structured extraction as a designer-agent mode (span / NER). |
+| 0.9.0 | 2026-06-08 | Prompt-structure advisor with batched I/O. |
+| 0.8.0 | 2026-06-04 | Operational hardening — per-step loop resumption and the sacred-test-set guard hook. |
+| 0.7.0 | 2026-06-02 | Judge-panel-assisted baseline labeling. |
+| 0.6.0 | 2026-06-02 | Input preprocessing and multilingual data. |
+| 0.5.0 | 2026-05-31 | Failure-driven prompting-technique suggestions. |
+| 0.4.0 | 2026-05-30 | The K>1 multi-field runner. |
+| 0.3.0 | 2026-05-29 | Finalize-layer statistics — bootstrap CIs and permutation tests. |
+| 0.2.0 | 2026-05-14 | Bookkeeping generalization for broader output shapes (the schema layer). |
+| 0.1.0 | 2026-05-06 | First tagged release — the core four-phase methodology. |
+
+## Versioning posture
+
+v1.0.0 froze the methodology. Near-term releases are **patch-only** (`v1.0.x`): bug fixes,
+documentation corrections, and advisor-catalog entries that conform to the frozen contract.
+New capability that changes the front-door surface waits for a dedicated **v2.0** arc — see
+[Scope & roadmap](scope.qmd).

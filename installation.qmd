@@ -5,52 +5,50 @@ subtitle: "spp ships as a Claude Code plugin."
 
 ## Requirements
 
-- **[Claude Code](https://claude.com/claude-code)** — spp is a plugin that runs inside it.
-- **Python 3.11+** — for the runner scripts spp generates and executes (scoring, splitting).
-- A **task model** reachable from your environment — the model the produced prompt will run
-  against (any OpenAI-compatible endpoint, or a local server).
+- **[Claude Code](https://claude.com/claude-code)** — spp runs as a plugin inside it.
+- **Python 3.11+** — for the runner scripts spp generates (scoring, splitting).
+- A **task model** — any OpenAI-compatible endpoint or local server the produced prompt runs
+  against.
 
 ## Install from the marketplace
 
 From inside Claude Code:
 
-```
+```bash
 /plugin marketplace add JayLBean/supervised-prompt-producer
 /plugin install spp@supervised-prompt-producer
 ```
 
-That registers the `spp` plugin and its `/spp:run` entrypoint.
+This registers the `spp` plugin and its `/spp:run` entrypoint.
 
 ## Local development
 
-To run against an unreleased or locally-modified version:
+To run an unreleased or locally-modified version:
 
-```sh
+```bash
 git clone https://github.com/JayLBean/supervised-prompt-producer.git
 cd supervised-prompt-producer
 claude --plugin-dir ./
 ```
 
-`--plugin-dir ./` loads the plugin from the working tree, so any local edits take effect on the
-next Claude Code session.
+`--plugin-dir ./` loads the plugin from the working tree, so local edits apply on the next
+session.
 
 ## Verify
 
-In a Claude Code session, confirm the entrypoint is available:
+Confirm the entrypoint is available:
 
-```
+```bash
 /spp:run
 ```
 
-With no task name, the designer agent begins the consultation and asks for one. (See
-[Usage](usage.qmd) for the full walkthrough.) If the command is not found, re-check the
-`/plugin install` step above, or that `--plugin-dir` points at the cloned repository root.
+With no task name, the consultation begins and asks for one. If the command is missing, re-check
+the install step, or that `--plugin-dir` points at the repo root.
 
-## What spp writes to your project
+## What spp writes
 
-spp operates on a `spp/<task-name>/` directory inside your project — the plan, baseline, splits,
-per-iteration artifacts, the frozen prompt, and the report all live there. Nothing is written
-outside that directory without your approval, and the sacred test set is never read until you
-approve gate **G5**.
+spp works inside a `spp/<task-name>/` directory — plan, baseline, splits, iteration artifacts,
+frozen prompt, and report. Nothing is written outside it without your approval, and the sacred
+test set is never read until gate **G5**.
 
 [Start using spp →](usage.qmd)

@@ -28,6 +28,8 @@ website:
         text: Examples
       - href: scope.qmd
         text: Scope
+      - href: changelog.qmd
+        text: Changelog
     right:
       - text: Benchmark
         href: https://jaylbean.github.io/spp-benchmark/

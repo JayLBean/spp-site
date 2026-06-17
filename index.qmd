@@ -1,6 +1,6 @@
 ---
 title: "spp — Supervised Prompt Producer"
-subtitle: "Disciplined, human-in-the-loop supervised prompt learning for Claude Code — a production-grade prompt you can defend in review, with evidence, not vibes."
+subtitle: "Human-in-the-loop supervised prompt learning for Claude Code — a production prompt you can defend in review, with evidence, not vibes."
 ---
 
 **spp** is a Claude Code plugin. It turns a labeled baseline into a production-grade
