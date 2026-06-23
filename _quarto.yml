@@ -16,6 +16,8 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - href: why-spp.qmd
+        text: Why spp
       - href: methodology.qmd
         text: Methodology
       - href: installation.qmd

@@ -1,0 +1,134 @@
+---
+title: "Why spp"
+subtitle: "Stop shipping prompts that overfit — a score-blind auditor for prompt optimization."
+---
+
+Most prompts that pass review fail in production. Not because the model is weak, but because the
+prompt was tuned against the wrong thing — the handful of rows the author remembered, or one
+model's instruction-following quirks — and nobody could see it until a model swap or a new data
+slice exposed it.
+
+**spp (Supervised Prompt Producer)** is an open-source methodology, shipped as a Claude Code
+plugin, for writing classification and extraction prompts you can actually defend in review. Its
+core is a single architectural constraint — *per-stage information isolation* — that lets a
+score-blind auditor catch overfitting before it ships. This page explains the problem, the
+mechanism, and the benchmark that tests whether it works.
+
+## The failure that started it
+
+The methodology comes from a real classifier for hair-loss discourse. A carefully iterated prompt
+scored `test F1 = 0.941`, recall `1.0` — on Qwen. Run unchanged across the GPT family, it split:
+`F1 ≈ 0.91` on GPT-4o, `≈ 0.76` on GPT-4o-mini. And the failures were not random. They clustered,
+and they were *length-correlated, not capability-correlated*: the prompt had quietly encoded a
+Qwen-specific tolerance for long, register-shifting inputs that the GPT models did not share.
+
+That is the trap. A number like 0.941 looks finished. The prompt was not better; it was
+*specialized*, and the specialization was invisible until the model changed.
+
+## Two ways a prompt overfits
+
+spp separates two failure modes, because they need opposite treatments.
+
+**Baseline overfitting** is the deal-breaker. The prompt learns your specific labels instead of
+the underlying class definition. It scores high on the rows you tuned against and collapses on
+similar-but-unseen data. It usually creeps in through the optimization loop itself: you chase rows
+that disagree with the current labels, accumulating row-specific patches that don't generalize.
+spp's whole design exists to prevent this.
+
+**Model overfitting** — the hair-loss case — is contextually acceptable. Specializing to one model
+is fine *if you know you are doing it* and ship accordingly. So spp does not try to prevent it; it
+documents it. Every run is namespaced by the exact model string, and the final report states which
+model the prompt was optimized against and what cross-model fragility, if any, was observed.
+
+The asymmetry is deliberate. Baseline overfitting destroys the claim to generalization; model
+overfitting is a disclosed scope boundary.
+
+## The mechanism: per-stage information isolation
+
+Here is the part that is different from automated optimizers like DSPy or APE.
+
+spp runs a four-phase loop — consult, label-and-split, optimize, finalize — with a **sacred test
+set** that is read exactly once, at the end. The optimization loop is where overfitting would
+normally enter, so each step of an iteration runs as an **isolated subagent with a strict input
+allow-list**. State flows between them through files, not a shared context:
+
+- A **discrepancy** stage sees the disagreed dev rows and writes up the error structure — but its
+  persistent output references rows *by ID only*.
+- A **rule-edit** stage rewrites the prompt from that diagnosis. It sees the row IDs and the class
+  definitions — never the row *content*, and never the *scores*. It cannot fit a rule to a
+  specific row because it never sees one.
+- An **auditor** reviews the edit and asks one question: is this *categorical* (a class of rows
+  with an articulable property) or *row-specific* (a patch for one weird row)? It sees the prompt
+  diff and the discrepancy — but never the scores.
+- Only *after* the auditor passes an edit does the dev signal get to select among approved edits.
+
+The load-bearing word is **blind**. An auditor that can see the new score will rationalize any edit
+that moved the metric — including the row-specific patches that overfit. Take the score away, and
+the only thing it can reason about is whether the rule would apply to a row it has never seen. That
+is the question you actually want answered.
+
+This is also why spp and automated optimizers are *structurally* different rather than competing.
+DSPy's speed comes from fusing edit proposal with metric-driven selection. spp's correctness comes
+from forbidding exactly that fusion: **propose, audit blind, then select.** The full per-stage
+allow-lists are on the [Methodology](methodology.qmd) page.
+
+## Does it work? The benchmark
+
+Claims about generalization are cheap, so spp ships a fair, reproducible benchmark. Three public
+tasks (AG News, SST-5, TREC), three methods (spp, EvoPrompt, DSPy), one task model (gpt-5-nano),
+the same seed prompt, the same sacred test, scored the same way. The only variable is who writes
+the prompt. Accuracy / task-model cost:
+
+| Task | Seed | EvoPrompt | DSPy (few-shot) | spp |
+|---|---:|---:|---:|---:|
+| AG News | 0.870 | 0.869 / $0.18 | **0.881** / $0.15 | 0.876 / **$0.04** |
+| SST-5 | 0.557 | 0.561 / $0.21 | **0.580** / $0.19 | 0.579 / **$0.10** |
+| TREC | 0.828 | 0.804 / $0.24 | 0.874 / $0.18 | **0.924** / **$0.11** |
+| Mean acc | 0.752 | 0.745 | 0.778 | **0.793** |
+
+spp posts the highest mean accuracy and the lowest task-model cost on every task. It matches DSPy's
+*few-shot* accuracy with *zero* demonstrations on AG News and SST-5, and wins TREC outright (+5
+over DSPy, +12 over EvoPrompt). On the metric that actually bills — dollars, because output tokens
+cost 8x input on this model — it is ~2.5x cheaper than either automated arm.
+
+The most telling result is on TREC: spp's accuracy *rose* from dev to test (0.895 → 0.924), while
+EvoPrompt's genetic search overfit its dev set and fell *below the very seed it started from* (0.825
+dev → 0.804 test < 0.828). The discipline shows up exactly where you would hope — in transfer to
+unseen data.
+
+And the caveats, stated up front because they are what make the rest credible: that cost counts
+*task-model tokens only*. spp shifts the optimization reasoning onto Claude subagents and a human,
+and that labor is real and not in the figure. DSPy ran few-shot (its design strength); the others
+ran 0-shot. It is a single model, locked, with no cross-model claim, and TREC used 500 test rows,
+so its error bars are wider. The full fairness ledger — "what cuts against spp" — is on the
+[benchmark site](https://jaylbean.github.io/spp-benchmark/).
+
+## What spp is not
+
+spp is for tasks with a labeled ground truth and a mechanical metric: classification, structured
+extraction, prompt decomposition. It is deliberately *not* for free-form generation, RAG,
+agentic/tool-use prompts, or automated prompt search — those have unbounded output spaces or
+different failure surfaces, and folding them in would dilute the one property that makes spp work.
+If you want an optimizer, spp *composes* with one: use spp to produce an audited starting prompt,
+then run DSPy downstream. The full boundary is on the [Scope](scope.qmd) page.
+
+## Try it
+
+spp is MIT-licensed and installs as a Claude Code plugin:
+
+```bash
+/plugin marketplace add JayLBean/supervised-prompt-producer
+/plugin install spp@supervised-prompt-producer
+```
+
+You invoke it once with `/spp:run`; it walks the [four phases](phases.qmd) and six approval gates
+while you review. The whole TREC benchmark run — every iteration's prompt, eval, discrepancy, and
+auditor verdict — ships as a worked, reproducible [example](examples.qmd).
+
+- **[Install spp](installation.qmd)** · **[Usage](usage.qmd)** · **[Methodology](methodology.qmd)**
+- Benchmark: <https://jaylbean.github.io/spp-benchmark/>
+- Code: <https://github.com/JayLBean/supervised-prompt-producer>
+
+If you ship LLM classification, the takeaway is simple: **keep edit proposal and score-based
+selection apart, and make something blind to the score decide whether each edit generalizes.** That
+one constraint is most of the value.
