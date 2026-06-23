@@ -1,0 +1,331 @@
+[
+  {
+    "objectID": "installation.html",
+    "href": "installation.html",
+    "title": "Installation",
+    "section": "",
+    "text": "Claude Code — spp runs as a plugin inside it.\nPython 3.11+ — for the runner scripts spp generates (scoring, splitting).\nA task model — any OpenAI-compatible endpoint or local server the produced prompt runs against."
+  },
+  {
+    "objectID": "installation.html#requirements",
+    "href": "installation.html#requirements",
+    "title": "Installation",
+    "section": "",
+    "text": "Claude Code — spp runs as a plugin inside it.\nPython 3.11+ — for the runner scripts spp generates (scoring, splitting).\nA task model — any OpenAI-compatible endpoint or local server the produced prompt runs against."
+  },
+  {
+    "objectID": "installation.html#install-from-the-marketplace",
+    "href": "installation.html#install-from-the-marketplace",
+    "title": "Installation",
+    "section": "Install from the marketplace",
+    "text": "Install from the marketplace\nFrom inside Claude Code:\n/plugin marketplace add JayLBean/supervised-prompt-producer\n/plugin install spp@supervised-prompt-producer\nThis registers the spp plugin and its /spp:run entrypoint."
+  },
+  {
+    "objectID": "installation.html#local-development",
+    "href": "installation.html#local-development",
+    "title": "Installation",
+    "section": "Local development",
+    "text": "Local development\nTo run an unreleased or locally-modified version:\ngit clone https://github.com/JayLBean/supervised-prompt-producer.git\ncd supervised-prompt-producer\nclaude --plugin-dir ./\n--plugin-dir ./ loads the plugin from the working tree, so local edits apply on the next session."
+  },
+  {
+    "objectID": "installation.html#verify",
+    "href": "installation.html#verify",
+    "title": "Installation",
+    "section": "Verify",
+    "text": "Verify\nConfirm the entrypoint is available:\n/spp:run\nWith no task name, the consultation begins and asks for one. If the command is missing, re-check the install step, or that --plugin-dir points at the repo root."
+  },
+  {
+    "objectID": "installation.html#what-spp-writes",
+    "href": "installation.html#what-spp-writes",
+    "title": "Installation",
+    "section": "What spp writes",
+    "text": "What spp writes\nspp works inside a spp/&lt;task-name&gt;/ directory — plan, baseline, splits, iteration artifacts, frozen prompt, and report. Nothing is written outside it without your approval, and the sacred test set is never read until gate G5.\nStart using spp →"
+  },
+  {
+    "objectID": "usage.html",
+    "href": "usage.html",
+    "title": "Usage",
+    "section": "",
+    "text": "From a project that has (or will have) a labeled baseline, describe your classification task to Claude Code, or invoke the plugin directly:\n/spp:run &lt;task-name&gt;\nYou invoke this once — it is the only command you type. The skill’s router then walks the four phases and the six human gates in order. The phases below (Init, Baseline, Loop, Finalize) are internal steps the router runs; you never invoke them directly.\n&lt;task-name&gt; is optional: if omitted, the designer asks for one as the first question. It becomes the directory name under spp/ — kebab-case, no spaces (e.g. hair-loss-discourse)."
+  },
+  {
+    "objectID": "usage.html#the-entrypoint",
+    "href": "usage.html#the-entrypoint",
+    "title": "Usage",
+    "section": "",
+    "text": "From a project that has (or will have) a labeled baseline, describe your classification task to Claude Code, or invoke the plugin directly:\n/spp:run &lt;task-name&gt;\nYou invoke this once — it is the only command you type. The skill’s router then walks the four phases and the six human gates in order. The phases below (Init, Baseline, Loop, Finalize) are internal steps the router runs; you never invoke them directly.\n&lt;task-name&gt; is optional: if omitted, the designer asks for one as the first question. It becomes the directory name under spp/ — kebab-case, no spaces (e.g. hair-loss-discourse)."
+  },
+  {
+    "objectID": "usage.html#the-four-phases",
+    "href": "usage.html#the-four-phases",
+    "title": "Usage",
+    "section": "The four phases",
+    "text": "The four phases\n\n1. Init — consultation → the contract\nThe designer agent reads your repo, then surfaces the assumptions you haven’t made explicit — the metric, decision rules and class definitions, model lock, labeling appetite, and stop criteria. It proposes a default plan for you to correct (strawman-first, not a blank questionnaire), writing plan.md — the contract every later phase reads from.\n\nGate G1 — approve the plan to proceed.\n\n\n\n2. Baseline — labels and splits\nspp labels rows with you (or reviews labels you have), running the baseline-quality review to catch bad gold before it poisons everything downstream. It then generates a stratified train / dev / test split, with the test set held sacred — untouched until the final phase.\n\nGate G2 — approve the reviewed baseline. Gate G3 — approve the split.\n\n\n\n3. Loop — the optimization loop\nIterations run against the dev set with the auditor active (and an optional adversary). Each scores the current prompt, diagnoses the disagreements, proposes one edit, and has it audited for categorical vs row-specific generalizability before any score selects it — the per-stage isolation described in the Methodology. The loop stops on a dev plateau, the overfitting guard (train pulling away from dev), or you.\n\nGate G4 — approve the dry-run to start iterating.\n\n\n\n4. Finalize — the sacred read and the report\nThe selected prompt is frozen and run against the sacred test set exactly once. spp writes a per-model REPORT.md — headline metric, per-class breakdown, generalization (dev → test), and an explicit Limitations section — plus PROMPT_FROZEN_v01.md with its content hash.\n\nGate G5 — approve reading the test set. Gate G6 — decide ship / no-ship."
+  },
+  {
+    "objectID": "usage.html#the-gate-phrases",
+    "href": "usage.html#the-gate-phrases",
+    "title": "Usage",
+    "section": "The gate phrases",
+    "text": "The gate phrases\nEach gate refuses to advance without an explicit, allowed response. The approval phrases are fixed and recorded in plan.md, so every hand-off is auditable:\n\n\n\nGate\nApproval phrase\n\n\n\n\nG1 — plan\napproved, proceed to baseline\n\n\nG2 — baseline\napproved, proceed to splits\n\n\nG3 — split\napproved, start the loop\n\n\nG4 — dry-run\napproved, run iteration 1\n\n\nG5 — finalize\napproved, score the test set\n\n\nG6 — production\napproved, freeze the prompt"
+  },
+  {
+    "objectID": "usage.html#a-worked-run",
+    "href": "usage.html#a-worked-run",
+    "title": "Usage",
+    "section": "A worked run",
+    "text": "A worked run\nA complete end-to-end example is the canonical hair-loss-relevance example; the public-benchmark example ships a full, real, reproducible run on public TREC data. See Examples for the full set, and the Phases reference for per-phase inputs, gates, and outputs."
+  },
+  {
+    "objectID": "phases.html",
+    "href": "phases.html",
+    "title": "The four phases",
+    "section": "",
+    "text": "Important\n\n\n\n/spp:run is the only command you type. The four phases below — Init, Baseline, Loop, and Finalize — are internal steps the router runs after that single invocation. You never call them directly.\nAfter you invoke /spp:run &lt;task-name&gt; once, the router walks the four phases below in order. Each operates on spp/&lt;task-name&gt;/ in your project and enforces its trailing human gate."
+  },
+  {
+    "objectID": "phases.html#phase-1-init",
+    "href": "phases.html#phase-1-init",
+    "title": "The four phases",
+    "section": "Phase 1 · Init",
+    "text": "Phase 1 · Init\nConsultation. Produces the contract every later phase reads from.\n\nInputs: your repository (read to ground the consultation), your answers to the designer’s questions.\nSubagent: designer — the only agent that holds a conversation. It adapts the methodology to your task (a stripped-down variant — no Phase 3, smaller splits, a judge-based metric — is a valid output when the task warrants it).\nOutputs: plan.md — the metric, class definitions, decision rules, model lock, split policy, and stop criteria. Idempotent and resumable: re-running picks up an existing plan.md.\nGate: G1 — approve the plan."
+  },
+  {
+    "objectID": "phases.html#phase-2-baseline",
+    "href": "phases.html#phase-2-baseline",
+    "title": "The four phases",
+    "section": "Phase 2 · Baseline",
+    "text": "Phase 2 · Baseline\nLabeling and splitting (Phase 1 + 1.5).\n\nInputs: plan.md; your raw rows, or an existing data/baseline.csv (spp detects it and switches to the bring-your-own-labels path).\nSub-skill: baseline-quality — adversarially reviews the gold labels and returns a readiness verdict before any optimization runs.\nOutputs: a canonicalized baseline.csv; splits.json — a stratified train / dev / test split with the test set registered as sacred (untouched until finalize).\nGates: G2 (baseline reviewed) and G3 (split confirmed)."
+  },
+  {
+    "objectID": "phases.html#phase-3-loop",
+    "href": "phases.html#phase-3-loop",
+    "title": "The four phases",
+    "section": "Phase 3 · Loop",
+    "text": "Phase 3 · Loop\nThe optimization loop (Phase 2). One iteration is a relay of information-isolated subagents (full allow-lists in the Methodology):\n\nScore the current prompt on train + dev.\nDiscrepancy subagent → discrepancy_analysis.md (diagnoses failures; references rows by ID only).\nRule-edit subagent → prompt_v(N+1).md (rewrites the prompt from the diagnosis; never sees row content or scores).\nAuditor subagent → auditor_review.md (verdicts each edit categorical vs row-specific; never sees scores).\nAdversary subagent (optional, ADVERSARY_FLAG = on) — blind-spot probes that never persist to the baseline.\nSelect on the dev signal among auditor-approved edits.\n\n\nOutputs: per-iteration prompt_v(N).md, eval.json, results.json, discrepancy_analysis.md, auditor_review.md; an EARLY_STOP.md at termination.\nStops on: a dev-metric plateau, the overfitting guard (train pulling away from dev), or you.\nGate: G4 — approve the dry-run to begin."
+  },
+  {
+    "objectID": "phases.html#phase-4-finalize",
+    "href": "phases.html#phase-4-finalize",
+    "title": "The four phases",
+    "section": "Phase 4 · Finalize",
+    "text": "Phase 4 · Finalize\nThe sacred read and the report (Phase 3).\n\nInputs: the dev-selected prompt; the sacred test set (read once, here, after G5).\nOutputs: PROMPT_FROZEN_v01.md (with content hash); a per-model REPORT.md — headline metric, per-class breakdown, dev → test generalization, and an explicit Limitations section naming the optimized-against model.\nGates: G5 (sanctioned test read) and G6 (ship / no-ship)."
+  },
+  {
+    "objectID": "phases.html#artifact-layout",
+    "href": "phases.html#artifact-layout",
+    "title": "The four phases",
+    "section": "Artifact layout",
+    "text": "Artifact layout\nspp/&lt;task-name&gt;/\n  plan.md                         the contract (G1)\n  data/baseline.csv               canonicalized gold (G2)\n  splits.json                     stratified split; test held sacred (G3)\n  runs/&lt;model_identifier&gt;/\n    run_01/ … run_NN/             per-iteration prompt + eval + discrepancy + auditor\n    EARLY_STOP.md                 termination record\n    PROMPT_FROZEN_v01.md          the frozen prompt (G6)\n    REPORT.md                     per-model result + limitations\nRuns are namespaced by the exact model string, so a score is never silently attributed to a different model."
+  },
+  {
+    "objectID": "methodology.html",
+    "href": "methodology.html",
+    "title": "Methodology",
+    "section": "",
+    "text": "spp is built around one claim: a prompt that scores well on your labeled data has not been shown to generalize — it may simply have learned your labels, or your model’s style. The methodology exists to separate genuine class-definition learning from those two kinds of overfitting, and to do so with evidence a reviewer can check."
+  },
+  {
+    "objectID": "methodology.html#the-two-failure-modes",
+    "href": "methodology.html#the-two-failure-modes",
+    "title": "Methodology",
+    "section": "1. The two failure modes",
+    "text": "1. The two failure modes\n\n1.1 Baseline overfitting — the deal-breaker\nThe prompt learns the specific labels in the baseline rather than the underlying class definition. Symptom: high score on the labeled set, collapse on similar-but-unseen data. Cause: an optimization loop that edits the prompt to chase rows disagreeing with current labels, accumulating row-specific patches that do not generalize.\nHow spp defends:\n\nA sacred test set. A stratified train / dev / test split where the test rows are untouched until the final phase. Optimization sees train + dev only.\nDev-driven stop. The loop terminates when dev metric plateaus or regresses — not when train looks good. Train-vs-dev divergence is itself a stop signal (the overfitting early-stop guard).\nThe auditor subagent. Every prompt edit is reviewed for categorical vs row-specific generalizability before the next iteration runs. This is the single highest-leverage defense (see §3).\nBaseline-quality review. Before any optimization, the labels themselves are adversarially reviewed — a bad baseline produces polished noise no later phase can recover from.\n\n\n\n1.2 Model overfitting — documented, not prevented\nThe prompt learns to exploit one model’s instruction-following style. The source project’s Qwen-locked prompt scored test F1 = 0.941 but split cross-family (≈0.76 GPT-4o-mini, ≈0.91 GPT-4o full), and the failures clustered by length, not capability — evidence the prompt encoded a Qwen-specific length tolerance the GPT family does not share.\nThis is acceptable if you know it. spp’s posture is to surface it, not prevent it:\n\nPer-model reports. Every run lives under runs/&lt;model_identifier&gt;/ using the exact model string — a score on model A is never silently attributed to model B.\nAn explicit Limitations section in REPORT.md stating which model the prompt was optimized against and what cross-model fragility was observed.\n\nThe asymmetry is intentional: baseline overfitting destroys the methodology’s claim to generalization; model overfitting is a known, documented scope boundary."
+  },
+  {
+    "objectID": "methodology.html#the-four-phases",
+    "href": "methodology.html#the-four-phases",
+    "title": "Methodology",
+    "section": "2. The four phases",
+    "text": "2. The four phases\nYou invoke the plugin once; its router walks four phases, each ending in a human approval gate.\n\n\n\n\n\n\n\n\nPhase\nPurpose\nProduces\n\n\n\n\nInit\nConsultation — read the repo, surface the metric and class definitions, write the contract\nplan.md\n\n\nBaseline\nLabel (or review) data with baseline-quality; generate the stratified split\nbaseline.csv, splits.json\n\n\nLoop\nRun optimization iterations with the auditor (and optional adversary) active; stop on dev plateau or the overfitting guard\nprompt_v(N).md, per-iteration artifacts\n\n\nFinalize\nRun the sacred test set once; generate the per-model report and freeze the prompt\nREPORT.md, PROMPT_FROZEN_v01.md\n\n\n\nEach phase refuses to proceed without an explicit approval at its gate (G1–G6)."
+  },
+  {
+    "objectID": "methodology.html#per-stage-information-isolation-the-load-bearing-property",
+    "href": "methodology.html#per-stage-information-isolation-the-load-bearing-property",
+    "title": "Methodology",
+    "section": "3. Per-stage information isolation — the load-bearing property",
+    "text": "3. Per-stage information isolation — the load-bearing property\nThis is the single highest-leverage architectural property of the skill, and the design lock that distinguishes spp from automated optimizers like DSPy and APE. The rest of the methodology is plumbing; per-stage isolation is the methodology.\nThe pattern. Every cognitive stage in the optimization loop runs in an isolated subagent with an explicit allow-list of inputs. The orchestrator builds each subagent’s context from that allow-list; the subagent’s context terminates when it returns; state flows between stages through files, not through the orchestrator’s memory. The orchestrator coordinates; cognition lives in the subagents.\n\nThe subagents, and what each is allowed to see\n\n\n\n\n\n\n\n\n\nStage\nSees\nBlind to\nWhy\n\n\n\n\nDiscrepancy\neval + results, disagreed dev rows (content), plan.md §2, current prompt\nprior-iteration artifacts, correctly-predicted rows, the test set\nreason fresh from current failures; its artifact references rows by ID only\n\n\nRule-edit\ncurrent prompt, discrepancy (IDs, no row content), plan.md §2\nbaseline.csv, scores, prior artifacts\nno row content reaches it under any path — so it cannot fit rules to specific rows\n\n\nAuditor\nthe prompt diff, prior discrepancy, plan.md §2\nall scores, train/test labels, the sacred test\njudge each edit categorical vs row-specific on its merits, not by whether it moved the metric\n\n\nAdversary (optional)\ncurrent prompt, prior discrepancy, plan.md §2\nscores, the sacred test, baseline rows\ngenerate blind-spot probes from reasoning, not from metric movement; its outputs never persist\n\n\n\n\n\nWhy the blindness is load-bearing\nIsolation is not stylistic. If any stage sees beyond its allow-list, it can rationalize behavior driven by the leaked signal:\n\nA discrepancy subagent with prior-iteration artifacts echoes earlier proposals instead of reasoning fresh.\nA rule-edit subagent with row-content access writes rules that look categorical but were authored to fit specific rows — the exact leakage the architecture exists to prevent.\nAn auditor with score access rationalizes any edit that improved the metric, including row-specific patches that overfit.\nAn adversary with score access generates probes driven by metric movement rather than genuine blind spots.\n\nThe absence of leakage forces each subagent to answer the generalization question directly — “would this rule still apply to a similar but unseen row?” — rather than via outcome. This is why spp’s prompts tend to carry rules that transfer: in the benchmark, spp’s TREC prompt rose from dev to test while a score-driven genetic optimizer’s fell below its own seed.\n\n\n\n\n\n\nImportant\n\n\n\nThe auditor’s score-access prohibition is absolute. Any change that lets the auditor see post-edit scores — directly or via a derived hint — silently breaks the methodology. The sanctioned escape valve for auditor cost is batch auditing, never score access or reduced frequency. See Scope."
+  },
+  {
+    "objectID": "methodology.html#the-six-human-gates",
+    "href": "methodology.html#the-six-human-gates",
+    "title": "Methodology",
+    "section": "4. The six human gates",
+    "text": "4. The six human gates\nThe human is in the loop at six explicit approval points; the agent does the work between them and refuses to advance without the gate’s allowed response.\n\n\n\nGate\nApproves\n\n\n\n\nG1\nthe plan / contract (plan.md)\n\n\nG2\nthe reviewed baseline labels\n\n\nG3\nthe train / dev / test split\n\n\nG4\nthe dry-run, to start the loop\n\n\nG5\nreading the sacred test set (once)\n\n\nG6\nthe ship / no-ship decision on the frozen prompt\n\n\n\nInstall spp → · Run it → · See it measured →"
+  },
+  {
+    "objectID": "changelog.html",
+    "href": "changelog.html",
+    "title": "Changelog",
+    "section": "",
+    "text": "The detailed, canonical changelog (Keep a Changelog format) lives in the repo: CHANGELOG.md. This is the summary."
+  },
+  {
+    "objectID": "changelog.html#unreleased",
+    "href": "changelog.html#unreleased",
+    "title": "Changelog",
+    "section": "Unreleased",
+    "text": "Unreleased\n\nAdded the public-benchmark example — the first backed by a real, reproducible public-data run — plus links to the live benchmark.\nFixed the runner to support OpenAI reasoning models (gpt-5*, o-series).\n\nDocumentation and a worked artifact set only; the frozen v1.0 contract is untouched."
+  },
+  {
+    "objectID": "changelog.html#releases",
+    "href": "changelog.html#releases",
+    "title": "Changelog",
+    "section": "Releases",
+    "text": "Releases\n\n\n\n\n\n\n\n\nVersion\nDate\nSummary\n\n\n\n\n1.0.0\n2026-06-08\nStabilization — the contract freeze. The methodology is frozen; new capability is now v2.0.\n\n\n0.11.0\n2026-06-08\nPrompt decomposition — a managed linear pipeline of node-local tasks.\n\n\n0.10.0\n2026-06-08\nStructured extraction as a designer-agent mode (span / NER).\n\n\n0.9.0\n2026-06-08\nPrompt-structure advisor with batched I/O.\n\n\n0.8.0\n2026-06-04\nOperational hardening — per-step loop resumption and the sacred-test-set guard hook.\n\n\n0.7.0\n2026-06-02\nJudge-panel-assisted baseline labeling.\n\n\n0.6.0\n2026-06-02\nInput preprocessing and multilingual data.\n\n\n0.5.0\n2026-05-31\nFailure-driven prompting-technique suggestions.\n\n\n0.4.0\n2026-05-30\nThe K&gt;1 multi-field runner.\n\n\n0.3.0\n2026-05-29\nFinalize-layer statistics — bootstrap CIs and permutation tests.\n\n\n0.2.0\n2026-05-14\nBookkeeping generalization for broader output shapes (the schema layer).\n\n\n0.1.0\n2026-05-06\nFirst tagged release — the core four-phase methodology."
+  },
+  {
+    "objectID": "changelog.html#versioning-posture",
+    "href": "changelog.html#versioning-posture",
+    "title": "Changelog",
+    "section": "Versioning posture",
+    "text": "Versioning posture\nv1.0.0 froze the methodology. Near-term releases are patch-only (v1.0.x): bug fixes, documentation corrections, and advisor-catalog entries that conform to the frozen contract. New capability that changes the front-door surface waits for a dedicated v2.0 arc — see Scope & roadmap."
+  },
+  {
+    "objectID": "scope.html",
+    "href": "scope.html",
+    "title": "Scope & roadmap",
+    "section": "",
+    "text": "spp produces and validates prompts for tasks with a labeled ground truth and a mechanical metric: classification (binary, multi-class, fixed-schema), multi-field and hierarchical structured output, structured extraction (variable-cardinality, span-grounded), and prompt decomposition (a managed linear pipeline). If you can write down the correct output for a row and compute a metric against it, spp applies."
+  },
+  {
+    "objectID": "scope.html#what-spp-is-for",
+    "href": "scope.html#what-spp-is-for",
+    "title": "Scope & roadmap",
+    "section": "",
+    "text": "spp produces and validates prompts for tasks with a labeled ground truth and a mechanical metric: classification (binary, multi-class, fixed-schema), multi-field and hierarchical structured output, structured extraction (variable-cardinality, span-grounded), and prompt decomposition (a managed linear pipeline). If you can write down the correct output for a row and compute a metric against it, spp applies."
+  },
+  {
+    "objectID": "scope.html#deliberate-non-goals",
+    "href": "scope.html#deliberate-non-goals",
+    "title": "Scope & roadmap",
+    "section": "Deliberate non-goals",
+    "text": "Deliberate non-goals\nThese are not roadmap items awaiting a future version. They are boundaries the methodology will not cross, because the underlying problem is different enough that any extension would be a different methodology — not a generalization of this one.\n\nGeneration tasks. Summarization, rewriting, instruction tuning, open conversation — there is no fixed output space or single correct label, so spp’s validation primitives (sacred test set, F1 / per-class metrics, the auditor’s categorical judgment) do not apply.\nTool-use and agentic prompts. These are an orchestration problem over tool boundaries and conversation state, not a prompt-quality problem under per-stage isolation.\nRAG prompts. RAG quality couples retrieval and prompt quality; isolating prompt quality requires fixing retrieval, which spp neither inspects nor provides primitives for.\nPrompt-injection / jailbreak resistance. spp audits quality on labeled data; adversarial robustness has its own evaluation primitives (red-teaming, threat models) and is handled separately.\nAutomated prompt search (DSPy / GEPA / APE fusion). spp requires that edit proposal precede selection-by-score, and that no score reach the auditor. Optimizers that fuse proposal and selection violate this by construction. The right relationship is composition — use spp to produce a starting prompt, then run an optimizer downstream — not fusion.\nAuditor frequency reduction. If per-iteration auditor cost is a problem, the sanctioned fix is batch auditing (audit edits in batches spanning iterations, preserving coverage) — never “audit every N iterations,” which silently weakens the audit.\nCross-model synthesis. spp optimizes for one target model; specializing to its idiosyncrasies is the objective, not overfitting to correct. Merging one prompt across models is mediocre on every model. Cross-model comparison is legitimate, but it is downstream model selection, not an spp primitive.\nLLM-as-judge in the scoring path. The scoring path stays mechanical. (Judges may assist baseline label creation, which is then frozen into the gold set — the scoring path itself never calls a judge.)\n\n\n\n\n\n\n\nNote\n\n\n\nThese boundaries are why the methodology stays small and defensible. When a request is ambiguous, spp leans toward treating it as a future roadmap item rather than a permanent non-goal — but the items above are settled."
+  },
+  {
+    "objectID": "scope.html#roadmap-posture-after-v1.0",
+    "href": "scope.html#roadmap-posture-after-v1.0",
+    "title": "Scope & roadmap",
+    "section": "Roadmap posture after v1.0",
+    "text": "Roadmap posture after v1.0\nv1.0.0 froze the methodology. The cadence afterward is deliberately slow:\n\nNear term is patch-only (v1.0.x). Bug fixes, documentation corrections, and advisor-catalog entries that conform to the frozen contract — shipped as v1.0.1, v1.0.2, … Holding minor releases back keeps the public surface visibly stable.\nNew capability is deferred to v2.0. Anything that changes the frozen surface — a new command, a new phase, a new front-door behavior — is a major bump, waiting for a dedicated v2.0 design arc.\n\nA leading v2.0 candidate is front-door onboarding: a discover → confirm → seed step that scans the project for candidate assets by shape (a row_id,text,label CSV → baseline; a JSON Schema → output schema; a held-out split → sacred test; a prompt_v*.md → seed) and confirms each with you before pre-filling the plan — so you no longer hand-write a long kickoff. The full roadmap lives in ROADMAP.md.\nCrucially, nothing on the roadmap loosens the load-bearing locks: per-stage information isolation, the auditor’s score-blindness, the rule-edit no-row-content rule, or the sacred test set remain fixed across every future version."
+  },
+  {
+    "objectID": "why-spp.html",
+    "href": "why-spp.html",
+    "title": "Why spp",
+    "section": "",
+    "text": "Most prompts that pass review fail in production. Not because the model is weak, but because the prompt was tuned against the wrong thing — the handful of rows the author remembered, or one model’s instruction-following quirks — and nobody could see it until a model swap or a new data slice exposed it.\nspp (Supervised Prompt Producer) is an open-source methodology, shipped as a Claude Code plugin, for writing classification and extraction prompts you can actually defend in review. Its core is a single architectural constraint — per-stage information isolation — that lets a score-blind auditor catch overfitting before it ships. This page explains the problem, the mechanism, and the benchmark that tests whether it works."
+  },
+  {
+    "objectID": "why-spp.html#the-failure-that-started-it",
+    "href": "why-spp.html#the-failure-that-started-it",
+    "title": "Why spp",
+    "section": "The failure that started it",
+    "text": "The failure that started it\nThe methodology comes from a real classifier for hair-loss discourse. A carefully iterated prompt scored test F1 = 0.941, recall 1.0 — on Qwen. Run unchanged across the GPT family, it split: F1 ≈ 0.91 on GPT-4o, ≈ 0.76 on GPT-4o-mini. And the failures were not random. They clustered, and they were length-correlated, not capability-correlated: the prompt had quietly encoded a Qwen-specific tolerance for long, register-shifting inputs that the GPT models did not share.\nThat is the trap. A number like 0.941 looks finished. The prompt was not better; it was specialized, and the specialization was invisible until the model changed."
+  },
+  {
+    "objectID": "why-spp.html#two-ways-a-prompt-overfits",
+    "href": "why-spp.html#two-ways-a-prompt-overfits",
+    "title": "Why spp",
+    "section": "Two ways a prompt overfits",
+    "text": "Two ways a prompt overfits\nspp separates two failure modes, because they need opposite treatments.\nBaseline overfitting is the deal-breaker. The prompt learns your specific labels instead of the underlying class definition. It scores high on the rows you tuned against and collapses on similar-but-unseen data. It usually creeps in through the optimization loop itself: you chase rows that disagree with the current labels, accumulating row-specific patches that don’t generalize. spp’s whole design exists to prevent this.\nModel overfitting — the hair-loss case — is contextually acceptable. Specializing to one model is fine if you know you are doing it and ship accordingly. So spp does not try to prevent it; it documents it. Every run is namespaced by the exact model string, and the final report states which model the prompt was optimized against and what cross-model fragility, if any, was observed.\nThe asymmetry is deliberate. Baseline overfitting destroys the claim to generalization; model overfitting is a disclosed scope boundary."
+  },
+  {
+    "objectID": "why-spp.html#the-mechanism-per-stage-information-isolation",
+    "href": "why-spp.html#the-mechanism-per-stage-information-isolation",
+    "title": "Why spp",
+    "section": "The mechanism: per-stage information isolation",
+    "text": "The mechanism: per-stage information isolation\nHere is the part that is different from automated optimizers like DSPy or APE.\nspp runs a four-phase loop — consult, label-and-split, optimize, finalize — with a sacred test set that is read exactly once, at the end. The optimization loop is where overfitting would normally enter, so each step of an iteration runs as an isolated subagent with a strict input allow-list. State flows between them through files, not a shared context:\n\nA discrepancy stage sees the disagreed dev rows and writes up the error structure — but its persistent output references rows by ID only.\nA rule-edit stage rewrites the prompt from that diagnosis. It sees the row IDs and the class definitions — never the row content, and never the scores. It cannot fit a rule to a specific row because it never sees one.\nAn auditor reviews the edit and asks one question: is this categorical (a class of rows with an articulable property) or row-specific (a patch for one weird row)? It sees the prompt diff and the discrepancy — but never the scores.\nOnly after the auditor passes an edit does the dev signal get to select among approved edits.\n\nThe load-bearing word is blind. An auditor that can see the new score will rationalize any edit that moved the metric — including the row-specific patches that overfit. Take the score away, and the only thing it can reason about is whether the rule would apply to a row it has never seen. That is the question you actually want answered.\nThis is also why spp and automated optimizers are structurally different rather than competing. DSPy’s speed comes from fusing edit proposal with metric-driven selection. spp’s correctness comes from forbidding exactly that fusion: propose, audit blind, then select. The full per-stage allow-lists are on the Methodology page."
+  },
+  {
+    "objectID": "why-spp.html#does-it-work-the-benchmark",
+    "href": "why-spp.html#does-it-work-the-benchmark",
+    "title": "Why spp",
+    "section": "Does it work? The benchmark",
+    "text": "Does it work? The benchmark\nClaims about generalization are cheap, so spp ships a fair, reproducible benchmark. Three public tasks (AG News, SST-5, TREC), three methods (spp, EvoPrompt, DSPy), one task model (gpt-5-nano), the same seed prompt, the same sacred test, scored the same way. The only variable is who writes the prompt. Accuracy / task-model cost:\n\n\n\n\n\n\n\n\n\n\nTask\nSeed\nEvoPrompt\nDSPy (few-shot)\nspp\n\n\n\n\nAG News\n0.870\n0.869 / $0.18\n0.881 / $0.15\n0.876 / $0.04\n\n\nSST-5\n0.557\n0.561 / $0.21\n0.580 / $0.19\n0.579 / $0.10\n\n\nTREC\n0.828\n0.804 / $0.24\n0.874 / $0.18\n0.924 / $0.11\n\n\nMean acc\n0.752\n0.745\n0.778\n0.793\n\n\n\nspp posts the highest mean accuracy and the lowest task-model cost on every task. It matches DSPy’s few-shot accuracy with zero demonstrations on AG News and SST-5, and wins TREC outright (+5 over DSPy, +12 over EvoPrompt). On the metric that actually bills — dollars, because output tokens cost 8x input on this model — it is ~2.5x cheaper than either automated arm.\nThe most telling result is on TREC: spp’s accuracy rose from dev to test (0.895 → 0.924), while EvoPrompt’s genetic search overfit its dev set and fell below the very seed it started from (0.825 dev → 0.804 test &lt; 0.828). The discipline shows up exactly where you would hope — in transfer to unseen data.\nAnd the caveats, stated up front because they are what make the rest credible: that cost counts task-model tokens only. spp shifts the optimization reasoning onto Claude subagents and a human, and that labor is real and not in the figure. DSPy ran few-shot (its design strength); the others ran 0-shot. It is a single model, locked, with no cross-model claim, and TREC used 500 test rows, so its error bars are wider. The full fairness ledger — “what cuts against spp” — is on the benchmark site."
+  },
+  {
+    "objectID": "why-spp.html#what-spp-is-not",
+    "href": "why-spp.html#what-spp-is-not",
+    "title": "Why spp",
+    "section": "What spp is not",
+    "text": "What spp is not\nspp is for tasks with a labeled ground truth and a mechanical metric: classification, structured extraction, prompt decomposition. It is deliberately not for free-form generation, RAG, agentic/tool-use prompts, or automated prompt search — those have unbounded output spaces or different failure surfaces, and folding them in would dilute the one property that makes spp work. If you want an optimizer, spp composes with one: use spp to produce an audited starting prompt, then run DSPy downstream. The full boundary is on the Scope page."
+  },
+  {
+    "objectID": "why-spp.html#try-it",
+    "href": "why-spp.html#try-it",
+    "title": "Why spp",
+    "section": "Try it",
+    "text": "Try it\nspp is MIT-licensed and installs as a Claude Code plugin:\n/plugin marketplace add JayLBean/supervised-prompt-producer\n/plugin install spp@supervised-prompt-producer\nYou invoke it once with /spp:run; it walks the four phases and six approval gates while you review. The whole TREC benchmark run — every iteration’s prompt, eval, discrepancy, and auditor verdict — ships as a worked, reproducible example.\n\nInstall spp · Usage · Methodology\nBenchmark: https://jaylbean.github.io/spp-benchmark/\nCode: https://github.com/JayLBean/supervised-prompt-producer\n\nIf you ship LLM classification, the takeaway is simple: keep edit proposal and score-based selection apart, and make something blind to the score decide whether each edit generalizes. That one constraint is most of the value."
+  },
+  {
+    "objectID": "examples.html",
+    "href": "examples.html",
+    "title": "Examples",
+    "section": "",
+    "text": "The spp repository ships a set of examples under examples/. Two are full worked runs; the rest are per-mode skeletons that show the expected artifact shape for each task type spp supports."
+  },
+  {
+    "objectID": "examples.html#worked-runs",
+    "href": "examples.html#worked-runs",
+    "title": "Examples",
+    "section": "Worked runs",
+    "text": "Worked runs\n\npublic-benchmark — the first example backed by a real, fully reproducible run on public data. A TREC (6-class question-type) run on gpt-5-nano, with every iteration’s prompt / eval / discrepancy / auditor trio, the frozen prompt, the single sacred-test read, and a three-way comparison against EvoPrompt and DSPy. Every row, prediction, and prompt is genuine and unredacted. This is the same run documented in the benchmark site’s TREC loop log.\nhair-loss-relevance — the canonical worked example shipped with spp’s first release. Demonstrates the end-to-end binary-relevance workflow and the failure-cluster taxonomy that motivated the methodology."
+  },
+  {
+    "objectID": "examples.html#per-mode-skeletons",
+    "href": "examples.html#per-mode-skeletons",
+    "title": "Examples",
+    "section": "Per-mode skeletons",
+    "text": "Per-mode skeletons\nThese show the artifact layout and plan.md shape for each task type, so you can see what spp produces before running it on your own data.\n\n\n\nExample\nTask mode\n\n\n\n\nmulti-field-extraction\nmulti-field structured output (K&gt;1)\n\n\nnested-schema\nhierarchical labels via JSON schema\n\n\nfeature-group-split\nfeature-group prompt splitting\n\n\nentity-extraction\nstructured extraction (variable-cardinality, span-grounded)\n\n\ndecomposition-pipeline\nprompt decomposition (managed linear pipeline)"
+  },
+  {
+    "objectID": "examples.html#see-the-methodology-measured",
+    "href": "examples.html#see-the-methodology-measured",
+    "title": "Examples",
+    "section": "See the methodology measured",
+    "text": "See the methodology measured\nFor the full evidence that the methodology works — accuracy, cost, token breakdowns, the fairness ledger, and per-task loop logs documenting every iteration and the human-in-the-loop gate exchange — see the dedicated benchmark site:\n→ The spp benchmark"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "spp — Supervised Prompt Producer",
+    "section": "",
+    "text": "spp is a Claude Code plugin. It turns a labeled baseline into a production-grade classification prompt through a four-phase, human-in-the-loop methodology, under a design lock that automated optimizers do not have: per-stage information isolation.\nIt handles classification (binary, multi-class, fixed-schema), multi-field and hierarchical structured output, structured extraction (variable-cardinality, span-grounded), and prompt decomposition (a managed linear pipeline) — anything with a labeled ground truth and a mechanical metric. It is deliberately not a generation, RAG, agentic, or prompt-search tool (see Scope)."
+  },
+  {
+    "objectID": "index.html#the-two-failure-modes-it-targets",
+    "href": "index.html#the-two-failure-modes-it-targets",
+    "title": "spp — Supervised Prompt Producer",
+    "section": "The two failure modes it targets",
+    "text": "The two failure modes it targets\nPrompt engineering by feel produces prompts that look good and fail in production. Automated optimizers trust a metric and search — which works only if the metric is honest. spp targets the two failure modes both miss:\n\nBaseline overfitting (the deal-breaker) — the prompt fits your specific labels, not the class definition. Scores high on what you tuned against, collapses on similar-but-unseen data. spp’s primary defense target.\nModel overfitting — the prompt fits one model’s instruction-following style. Fine if you know it and ship accordingly; dangerous if it ships unmarked. spp documents and surfaces it.\n\nHow spp defends against each →"
+  },
+  {
+    "objectID": "index.html#the-example-that-motivates-both",
+    "href": "index.html#the-example-that-motivates-both",
+    "title": "spp — Supervised Prompt Producer",
+    "section": "The example that motivates both",
+    "text": "The example that motivates both\nThe methodology comes from a hair-loss-discourse classifier that produced a Qwen-locked prompt at test F1 = 0.941, recall = 1.0. Run cross-family, it split — F1 ≈ 0.76 on GPT-4o-mini, ≈ 0.91 on GPT-4o full — and the failures clustered by length, not capability. A prompt that looked finished was silently model-specific. spp exists to make that visible, and to stop the deeper problem (fitting the labels instead of the definition) before it ever ships."
+  },
+  {
+    "objectID": "index.html#how-it-works-four-phases-six-gates",
+    "href": "index.html#how-it-works-four-phases-six-gates",
+    "title": "spp — Supervised Prompt Producer",
+    "section": "How it works — four phases, six gates",
+    "text": "How it works — four phases, six gates\nYou invoke the plugin once (/spp:run &lt;task-name&gt;); its router then walks four phases, each ending in a human approval gate (G1–G6).\n\n\n\n\n\n\n\n\nPhase\nWhat it does\nGate\n\n\n\n\nInit\nConsultation: the designer agent reads your repo, surfaces the metric and class definitions, writes plan.md (the contract)\nG1\n\n\nBaseline\nLabel rows (or review your labels) with baseline-quality, then generate the stratified split\nG2 / G3\n\n\nLoop\nIterate against dev with the auditor active; each edit is reviewed before any score signal; stop on plateau or the overfitting guard\nG4\n\n\nFinalize\nRun the frozen prompt against the sacred test once; generate the per-model REPORT.md\nG6\n\n\n\nThese four phases are internal steps the router runs after your single /spp:run — you never invoke them directly. Full usage →"
+  },
+  {
+    "objectID": "index.html#does-it-work-the-benchmark",
+    "href": "index.html#does-it-work-the-benchmark",
+    "title": "spp — Supervised Prompt Producer",
+    "section": "Does it work? The benchmark",
+    "text": "Does it work? The benchmark\nOn three public classification tasks (AG News, SST-5, TREC), same task model, same seed prompt, same sacred test, spp posts the highest mean accuracy and the lowest task-model cost on every task — matching DSPy’s few-shot accuracy with zero demonstrations on two tasks, and winning TREC outright. The full three-way comparison (vs EvoPrompt and DSPy), with per-task loop logs, is published separately:\n→ The spp benchmark"
+  },
+  {
+    "objectID": "index.html#where-to-go-next",
+    "href": "index.html#where-to-go-next",
+    "title": "spp — Supervised Prompt Producer",
+    "section": "Where to go next",
+    "text": "Where to go next\n\nMethodology — the scientific core: the failure modes, the four phases, and per-stage information isolation (the load-bearing property).\nInstallation — install the plugin in Claude Code.\nUsage — the entrypoint, the four phases, and the six gates step by step.\nPhases — per-phase reference: inputs, gates, outputs, subagents.\nExamples — worked, reproducible runs.\nScope — what spp is for, and the deliberate non-goals."
+  }
+]
